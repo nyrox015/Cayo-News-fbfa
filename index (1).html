@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cayo News — Administration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1C2833;
+    --ink-soft:#2E3B47;
+    --paper:#F3ECDD;
+    --paper-raised:#FFFDF8;
+    --rule:#D8CDB4;
+    --teal:#2A7F7E;
+    --teal-dark:#1E5E5D;
+    --coral:#C1443D;
+    --gold:#B9832F;
+    --text:#2A241C;
+    --text-soft:#6B6153;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--text);
+    font-family:'IBM Plex Sans', sans-serif;
+    min-height:100vh;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important; animation:none !important;}
+  }
+  a{color:inherit;}
+  button{font-family:inherit;cursor:pointer;}
+  input,select{font-family:inherit;}
+  :focus-visible{outline:2px solid var(--teal); outline-offset:2px;}
+
+  .app{display:flex; min-height:100vh;}
+
+  /* --- Sidebar / masthead --- */
+  .sidebar{
+    background:var(--ink);
+    color:var(--paper);
+    width:230px;
+    flex-shrink:0;
+    padding:28px 20px;
+    display:flex;
+    flex-direction:column;
+    gap:32px;
+  }
+  .masthead h1{
+    font-family:'Source Serif 4', serif;
+    font-size:1.7rem;
+    font-weight:700;
+    margin:0 0 4px 0;
+    letter-spacing:0.01em;
+    line-height:1.1;
+  }
+  .masthead .sub{
+    font-size:0.72rem;
+    color:#A9B4BC;
+    border-top:1px solid #3C4854;
+    padding-top:8px;
+    margin-top:8px;
+  }
+  nav{display:flex; flex-direction:column; gap:2px;}
+  nav button{
+    background:none;
+    border:none;
+    color:#C7CED3;
+    text-align:left;
+    padding:10px 10px;
+    font-size:0.92rem;
+    border-radius:3px;
+    border-left:3px solid transparent;
+  }
+  nav button:hover{background:#26313C;}
+  nav button.active{
+    background:#26313C;
+    color:var(--paper);
+    border-left:3px solid var(--gold);
+    font-weight:500;
+  }
+  .sidebar-footer{
+    margin-top:auto;
+    font-size:0.7rem;
+    color:#7C8790;
+    line-height:1.5;
+  }
+
+  main{flex:1; padding:36px 44px; max-width:980px;}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block; animation:fadein 0.15s ease;}
+  @keyframes fadein{from{opacity:0.5;} to{opacity:1;}}
+
+  h2.section-title{
+    font-family:'Source Serif 4', serif;
+    font-size:1.5rem;
+    font-weight:600;
+    margin:0 0 4px 0;
+  }
+  .section-caption{
+    color:var(--text-soft);
+    font-size:0.9rem;
+    margin:0 0 28px 0;
+  }
+
+  /* --- Dashboard cards --- */
+  .stat-row{display:flex; gap:0; margin-bottom:36px; border:1px solid var(--rule); border-radius:4px; overflow:hidden;}
+  .stat{flex:1; padding:18px 20px; border-right:1px solid var(--rule); background:var(--paper-raised);}
+  .stat:last-child{border-right:none;}
+  .stat .label{font-size:0.78rem; color:var(--text-soft); margin-bottom:6px;}
+  .stat .value{font-family:'IBM Plex Mono', monospace; font-size:1.4rem; font-weight:600;}
+  .stat .value.pos{color:var(--teal-dark);}
+  .stat .value.neg{color:var(--coral);}
+
+  .dash-block h3{font-family:'Source Serif 4', serif; font-size:1.1rem; margin:0 0 12px 0;}
+  .dash-two-col{display:flex; gap:32px; flex-wrap:wrap;}
+  .dash-two-col > div{flex:1; min-width:280px;}
+
+  /* --- Ledger tables --- */
+  table{width:100%; border-collapse:collapse; font-size:0.9rem;}
+  thead th{
+    text-align:left;
+    font-weight:500;
+    color:var(--text-soft);
+    font-size:0.78rem;
+    padding:6px 10px;
+    border-bottom:1px solid var(--ink);
+  }
+  tbody td{padding:9px 10px; border-bottom:1px solid var(--rule);}
+  tbody tr:hover{background:rgba(0,0,0,0.02);}
+  .num{font-family:'IBM Plex Mono', monospace; text-align:right; white-space:nowrap;}
+  .num.entree{color:var(--teal-dark);}
+  .num.sortie{color:var(--coral);}
+  .badge{
+    display:inline-block; padding:2px 9px; border-radius:10px; font-size:0.74rem;
+  }
+  .badge.paid{background:#DCEEE9; color:var(--teal-dark);}
+  .badge.pending{background:#F3E3C9; color:var(--gold);}
+  .row-delete{background:none;border:none;color:var(--text-soft);font-size:0.85rem;padding:2px 6px;}
+  .row-delete:hover{color:var(--coral);}
+
+  /* --- Forms --- */
+  .form-card{
+    background:var(--paper-raised);
+    border:1px solid var(--rule);
+    border-radius:4px;
+    padding:18px 20px;
+    margin:20px 0 32px 0;
+  }
+  .form-card h4{margin:0 0 14px 0; font-size:0.95rem; font-family:'Source Serif 4', serif;}
+  .form-grid{display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;}
+  .field{display:flex; flex-direction:column; gap:4px; min-width:130px;}
+  .field label{font-size:0.74rem; color:var(--text-soft);}
+  .field input, .field select{
+    padding:7px 9px; border:1px solid var(--rule); border-radius:3px;
+    background:#fff; font-size:0.88rem; color:var(--text);
+  }
+  .field.grow{flex:1; min-width:200px;}
+  .btn{
+    background:var(--teal); color:#fff; border:none; padding:8px 18px;
+    border-radius:3px; font-size:0.88rem; font-weight:500;
+  }
+  .btn:hover{background:var(--teal-dark);}
+  .btn.secondary{background:transparent; color:var(--ink); border:1px solid var(--rule);}
+  .btn.secondary:hover{border-color:var(--ink);}
+
+  .empty-state{
+    padding:28px 20px; text-align:left; color:var(--text-soft);
+    border:1px dashed var(--rule); border-radius:4px; font-size:0.9rem;
+  }
+
+  .subtabs{display:flex; gap:4px; margin-bottom:22px; border-bottom:1px solid var(--rule);}
+  .subtabs button{
+    background:none; border:none; padding:9px 4px; margin-right:18px;
+    font-size:0.9rem; color:var(--text-soft); border-bottom:2px solid transparent;
+  }
+  .subtabs button.active{color:var(--ink); border-bottom:2px solid var(--gold); font-weight:500;}
+
+  @media (max-width: 780px){
+    .app{flex-direction:column;}
+    .sidebar{width:100%; flex-direction:row; align-items:center; padding:16px; gap:16px; overflow-x:auto;}
+    .masthead .sub{display:none;}
+    nav{flex-direction:row;}
+    .sidebar-footer{display:none;}
+    main{padding:22px 18px;}
+    .stat-row{flex-direction:column;}
+    .stat{border-right:none; border-bottom:1px solid var(--rule);}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="masthead">
+      <h1>Cayo&nbsp;News</h1>
+      <div class="sub">Administration interne — Flashback FA</div>
+    </div>
+    <nav>
+      <button data-tab="dashboard" class="active">Tableau de bord</button>
+      <button data-tab="compta">Comptabilité</button>
+      <button data-tab="factures">Factures &amp; devis</button>
+      <button data-tab="paie">Paie</button>
+    </nav>
+    <div class="sidebar-footer">Données partagées avec toute l'équipe Cayo News.</div>
+  </aside>
+
+  <main>
+
+    <!-- DASHBOARD -->
+    <section class="tab-panel active" id="tab-dashboard">
+      <h2 class="section-title">Tableau de bord</h2>
+      <p class="section-caption">Vue d'ensemble de l'activité de l'entreprise.</p>
+      <div class="stat-row" id="stat-row"></div>
+      <div class="dash-two-col">
+        <div class="dash-block">
+          <h3>Dernières écritures</h3>
+          <div id="dash-recent-transactions"></div>
+        </div>
+        <div class="dash-block">
+          <h3>Factures en attente</h3>
+          <div id="dash-pending-invoices"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- COMPTABILITE -->
+    <section class="tab-panel" id="tab-compta">
+      <h2 class="section-title">Comptabilité</h2>
+      <p class="section-caption">Registre des entrées et sorties d'argent de l'entreprise.</p>
+
+      <div class="form-card">
+        <h4>Ajouter une écriture</h4>
+        <form id="form-transaction" class="form-grid">
+          <div class="field">
+            <label>Date</label>
+            <input type="date" name="date" required>
+          </div>
+          <div class="field">
+            <label>Type</label>
+            <select name="type">
+              <option value="entree">Entrée</option>
+              <option value="sortie">Sortie</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Catégorie</label>
+            <select name="category">
+              <option>Facture client</option>
+              <option>Salaires</option>
+              <option>Primes</option>
+              <option>Matériel</option>
+              <option>Autre</option>
+            </select>
+          </div>
+          <div class="field grow">
+            <label>Description</label>
+            <input type="text" name="description" placeholder="Détail de l'opération" required>
+          </div>
+          <div class="field">
+            <label>Montant ($)</label>
+            <input type="number" name="amount" min="0" step="1" required>
+          </div>
+          <button class="btn" type="submit">Ajouter</button>
+        </form>
+      </div>
+
+      <div id="compta-table-wrap"></div>
+    </section>
+
+    <!-- FACTURES -->
+    <section class="tab-panel" id="tab-factures">
+      <h2 class="section-title">Factures &amp; devis</h2>
+      <p class="section-caption">Suivi des factures et devis émis aux clients.</p>
+
+      <div class="form-card">
+        <h4>Créer une facture / un devis</h4>
+        <form id="form-invoice" class="form-grid">
+          <div class="field">
+            <label>Date</label>
+            <input type="date" name="date" required>
+          </div>
+          <div class="field grow">
+            <label>Client</label>
+            <input type="text" name="client" placeholder="Nom du client" required>
+          </div>
+          <div class="field grow">
+            <label>Description</label>
+            <input type="text" name="description" placeholder="Objet de la facture">
+          </div>
+          <div class="field">
+            <label>Montant ($)</label>
+            <input type="number" name="amount" min="0" step="1" required>
+          </div>
+          <button class="btn" type="submit">Créer</button>
+        </form>
+      </div>
+
+      <div id="invoices-table-wrap"></div>
+    </section>
+
+    <!-- PAIE -->
+    <section class="tab-panel" id="tab-paie">
+      <h2 class="section-title">Paie</h2>
+      <p class="section-caption">Gestion de l'équipe, des salaires (par tranche de 15 min) et des primes hebdomadaires.</p>
+
+      <div class="subtabs" id="paie-subtabs">
+        <button data-subtab="equipe" class="active">Équipe</button>
+        <button data-subtab="salaires">Salaires</button>
+        <button data-subtab="primes">Primes</button>
+        <button data-subtab="recap">Récap de la semaine</button>
+      </div>
+
+      <div id="paie-equipe">
+        <div class="form-card">
+          <h4>Ajouter un membre</h4>
+          <form id="form-employee" class="form-grid">
+            <div class="field grow">
+              <label>Nom</label>
+              <input type="text" name="name" placeholder="Nom / pseudo RP" required>
+            </div>
+            <div class="field grow">
+              <label>Rôle</label>
+              <input type="text" name="role" placeholder="Ex : journaliste, cadre...">
+            </div>
+            <button class="btn" type="submit">Ajouter</button>
+          </form>
+        </div>
+        <div id="employees-table-wrap"></div>
+      </div>
+
+      <div id="paie-salaires" style="display:none;">
+        <div class="form-card">
+          <h4>Enregistrer un salaire (tranche de 15 min)</h4>
+          <form id="form-salaire" class="form-grid">
+            <div class="field grow">
+              <label>Employé</label>
+              <select name="employeeId" required></select>
+            </div>
+            <div class="field">
+              <label>Montant ($ — 150 à 500)</label>
+              <input type="number" name="amount" min="150" max="500" step="10" value="150" required>
+            </div>
+            <div class="field">
+              <label>Date</label>
+              <input type="date" name="date" required>
+            </div>
+            <button class="btn" type="submit">Enregistrer</button>
+          </form>
+        </div>
+        <div id="salaires-table-wrap"></div>
+      </div>
+
+      <div id="paie-primes" style="display:none;">
+        <div class="form-card">
+          <h4>Attribuer une prime hebdomadaire</h4>
+          <form id="form-prime" class="form-grid">
+            <div class="field grow">
+              <label>Employé</label>
+              <select name="employeeId" required></select>
+            </div>
+            <div class="field">
+              <label>Montant ($)</label>
+              <input type="number" name="amount" min="0" step="10" required>
+            </div>
+            <div class="field">
+              <label>Date</label>
+              <input type="date" name="date" required>
+            </div>
+            <button class="btn" type="submit">Attribuer</button>
+          </form>
+        </div>
+        <div id="primes-table-wrap"></div>
+      </div>
+
+      <div id="paie-recap" style="display:none;">
+        <div id="recap-table-wrap"></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+(function(){
+
+  const state = {
+    employees: [],
+    transactions: [],
+    invoices: [],
+    payroll: [] // {id, employeeId, date, type: 'salaire'|'prime', amount}
+  };
+
+  const fmt = n => '$' + Number(n).toLocaleString('fr-FR', {maximumFractionDigits:0});
+  const todayStr = () => new Date().toISOString().slice(0,10);
+  const uid = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+
+  function mondayOf(dateObj){
+    const d = new Date(dateObj);
+    const day = d.getDay(); // 0 = dimanche
+    const diff = (day === 0 ? -6 : 1) - day;
+    d.setDate(d.getDate() + diff);
+    d.setHours(0,0,0,0);
+    return d;
+  }
+
+  // ---------- Storage ----------
+  async function loadAll(){
+    const keys = ['employees','transactions','invoices','payroll'];
+    for(const k of keys){
+      try{
+        const raw = localStorage.getItem('cayoNews_' + k);
+        state[k] = raw ? JSON.parse(raw) : [];
+      }catch(e){
+        console.error('Erreur de chargement', k, e);
+        state[k] = [];
+      }
+    }
+  }
+  async function save(key){
+    try{
+      localStorage.setItem('cayoNews_' + key, JSON.stringify(state[key]));
+    }catch(e){
+      console.error('Erreur de sauvegarde', key, e);
+    }
+  }
+
+  // ---------- Navigation ----------
+  document.querySelectorAll('nav button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  document.querySelectorAll('#paie-subtabs button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('#paie-subtabs button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      ['equipe','salaires','primes','recap'].forEach(name=>{
+        document.getElementById('paie-'+name).style.display = (name === btn.dataset.subtab) ? 'block' : 'none';
+      });
+    });
+  });
+
+  // ---------- Renderers ----------
+  function renderDashboard(){
+    const solde = state.transactions.reduce((s,t)=> s + (t.type==='entree'? Number(t.amount) : -Number(t.amount)), 0);
+    const pendingInvoices = state.invoices.filter(i=>i.status==='en_attente');
+    const pendingTotal = pendingInvoices.reduce((s,i)=>s+Number(i.amount),0);
+    const monday = mondayOf(new Date());
+    const weekPayroll = state.payroll.filter(p=> new Date(p.date) >= monday);
+    const masseSalariale = weekPayroll.reduce((s,p)=>s+Number(p.amount),0);
+
+    document.getElementById('stat-row').innerHTML = `
+      <div class="stat">
+        <div class="label">Solde de caisse</div>
+        <div class="value ${solde>=0?'pos':'neg'}">${fmt(solde)}</div>
+      </div>
+      <div class="stat">
+        <div class="label">Factures en attente</div>
+        <div class="value">${fmt(pendingTotal)}</div>
+      </div>
+      <div class="stat">
+        <div class="label">Masse salariale (cette semaine)</div>
+        <div class="value">${fmt(masseSalariale)}</div>
+      </div>
+      <div class="stat">
+        <div class="label">Membres de l'équipe</div>
+        <div class="value">${state.employees.length}</div>
+      </div>
+    `;
+
+    const recent = [...state.transactions].sort((a,b)=> new Date(b.date)-new Date(a.date)).slice(0,5);
+    document.getElementById('dash-recent-transactions').innerHTML = recent.length ? `
+      <table><tbody>
+        ${recent.map(t=>`<tr>
+          <td>${t.date}</td>
+          <td>${t.description}</td>
+          <td class="num ${t.type==='entree'?'entree':'sortie'}">${t.type==='entree'?'+':'-'}${fmt(t.amount)}</td>
+        </tr>`).join('')}
+      </tbody></table>
+    ` : `<div class="empty-state">Aucune écriture pour l'instant. Ajoutez-en une dans l'onglet Comptabilité.</div>`;
+
+    document.getElementById('dash-pending-invoices').innerHTML = pendingInvoices.length ? `
+      <table><tbody>
+        ${pendingInvoices.slice(0,5).map(i=>`<tr>
+          <td>${i.client}</td>
+          <td class="num">${fmt(i.amount)}</td>
+        </tr>`).join('')}
+      </tbody></table>
+    ` : `<div class="empty-state">Aucune facture en attente.</div>`;
+  }
+
+  function renderCompta(){
+    const rows = [...state.transactions].sort((a,b)=> new Date(b.date)-new Date(a.date));
+    document.getElementById('compta-table-wrap').innerHTML = rows.length ? `
+      <table>
+        <thead><tr><th>Date</th><th>Catégorie</th><th>Description</th><th></th><th style="text-align:right;">Montant</th><th></th></tr></thead>
+        <tbody>
+          ${rows.map(t=>`<tr>
+            <td>${t.date}</td>
+            <td>${t.category}</td>
+            <td>${t.description}</td>
+            <td><span class="badge ${t.type==='entree'?'paid':'pending'}">${t.type==='entree'?'Entrée':'Sortie'}</span></td>
+            <td class="num ${t.type}">${t.type==='entree'?'+':'-'}${fmt(t.amount)}</td>
+            <td><button class="row-delete" data-del-transaction="${t.id}" title="Supprimer">✕</button></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    ` : `<div class="empty-state">Aucune écriture enregistrée pour l'instant. Utilisez le formulaire ci-dessus pour commencer.</div>`;
+
+    rows.forEach(()=>{});
+    document.querySelectorAll('[data-del-transaction]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        state.transactions = state.transactions.filter(t=>t.id !== btn.dataset.delTransaction);
+        await save('transactions');
+        renderAll();
+      });
+    });
+  }
+
+  function renderFactures(){
+    const rows = [...state.invoices].sort((a,b)=> new Date(b.date)-new Date(a.date));
+    document.getElementById('invoices-table-wrap').innerHTML = rows.length ? `
+      <table>
+        <thead><tr><th>Date</th><th>Client</th><th>Description</th><th style="text-align:right;">Montant</th><th>Statut</th><th></th><th></th></tr></thead>
+        <tbody>
+          ${rows.map(i=>`<tr>
+            <td>${i.date}</td>
+            <td>${i.client}</td>
+            <td>${i.description||'—'}</td>
+            <td class="num">${fmt(i.amount)}</td>
+            <td><span class="badge ${i.status==='payee'?'paid':'pending'}">${i.status==='payee'?'Payée':'En attente'}</span></td>
+            <td>${i.status==='en_attente' ? `<button class="btn secondary" data-pay-invoice="${i.id}" style="padding:4px 10px;font-size:0.78rem;">Marquer payée</button>` : ''}</td>
+            <td><button class="row-delete" data-del-invoice="${i.id}" title="Supprimer">✕</button></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    ` : `<div class="empty-state">Aucune facture ou devis pour l'instant. Créez-en un ci-dessus.</div>`;
+
+    document.querySelectorAll('[data-pay-invoice]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const inv = state.invoices.find(i=>i.id === btn.dataset.payInvoice);
+        if(!inv) return;
+        inv.status = 'payee';
+        state.transactions.push({
+          id: uid('t'), date: todayStr(), type:'entree', category:'Facture client',
+          description: `Facture — ${inv.client}`, amount: inv.amount
+        });
+        await save('invoices');
+        await save('transactions');
+        renderAll();
+      });
+    });
+    document.querySelectorAll('[data-del-invoice]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        state.invoices = state.invoices.filter(i=>i.id !== btn.dataset.delInvoice);
+        await save('invoices');
+        renderAll();
+      });
+    });
+  }
+
+  function employeeOptions(){
+    return state.employees.map(e=>`<option value="${e.id}">${e.name}${e.role? ' — '+e.role:''}</option>`).join('');
+  }
+
+  function renderEmployees(){
+    document.querySelectorAll('select[name="employeeId"]').forEach(sel=>{
+      sel.innerHTML = state.employees.length ? employeeOptions() : `<option value="">Ajoutez d'abord un membre</option>`;
+    });
+
+    document.getElementById('employees-table-wrap').innerHTML = state.employees.length ? `
+      <table>
+        <thead><tr><th>Nom</th><th>Rôle</th><th></th></tr></thead>
+        <tbody>
+          ${state.employees.map(e=>`<tr>
+            <td>${e.name}</td>
+            <td>${e.role||'—'}</td>
+            <td><button class="row-delete" data-del-employee="${e.id}" title="Retirer">✕</button></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    ` : `<div class="empty-state">Aucun membre enregistré. Ajoutez la première recrue de Cayo News ci-dessus.</div>`;
+
+    document.querySelectorAll('[data-del-employee]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        state.employees = state.employees.filter(e=>e.id !== btn.dataset.delEmployee);
+        await save('employees');
+        renderAll();
+      });
+    });
+  }
+
+  function nameFor(id){
+    const e = state.employees.find(e=>e.id===id);
+    return e ? e.name : 'Ancien membre';
+  }
+
+  function renderSalaires(){
+    const rows = state.payroll.filter(p=>p.type==='salaire').sort((a,b)=> new Date(b.date)-new Date(a.date)).slice(0,30);
+    document.getElementById('salaires-table-wrap').innerHTML = rows.length ? `
+      <table>
+        <thead><tr><th>Date</th><th>Employé</th><th style="text-align:right;">Montant</th><th></th></tr></thead>
+        <tbody>
+          ${rows.map(p=>`<tr>
+            <td>${p.date}</td>
+            <td>${nameFor(p.employeeId)}</td>
+            <td class="num sortie">${fmt(p.amount)}</td>
+            <td><button class="row-delete" data-del-payroll="${p.id}" title="Supprimer">✕</button></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    ` : `<div class="empty-state">Aucun salaire enregistré pour l'instant.</div>`;
+    bindPayrollDelete();
+  }
+
+  function renderPrimes(){
+    const rows = state.payroll.filter(p=>p.type==='prime').sort((a,b)=> new Date(b.date)-new Date(a.date));
+    document.getElementById('primes-table-wrap').innerHTML = rows.length ? `
+      <table>
+        <thead><tr><th>Date</th><th>Employé</th><th style="text-align:right;">Montant</th><th></th></tr></thead>
+        <tbody>
+          ${rows.map(p=>`<tr>
+            <td>${p.date}</td>
+            <td>${nameFor(p.employeeId)}</td>
+            <td class="num sortie">${fmt(p.amount)}</td>
+            <td><button class="row-delete" data-del-payroll="${p.id}" title="Supprimer">✕</button></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    ` : `<div class="empty-state">Aucune prime attribuée pour l'instant.</div>`;
+    bindPayrollDelete();
+  }
+
+  function bindPayrollDelete(){
+    document.querySelectorAll('[data-del-payroll]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        state.payroll = state.payroll.filter(p=>p.id !== btn.dataset.delPayroll);
+        await save('payroll');
+        renderAll();
+      });
+    });
+  }
+
+  function renderRecap(){
+    const monday = mondayOf(new Date());
+    const rows = state.employees.map(e=>{
+      const entries = state.payroll.filter(p=>p.employeeId===e.id && new Date(p.date) >= monday);
+      const salaire = entries.filter(p=>p.type==='salaire').reduce((s,p)=>s+Number(p.amount),0);
+      const prime = entries.filter(p=>p.type==='prime').reduce((s,p)=>s+Number(p.amount),0);
+      return {name:e.name, role:e.role, salaire, prime, total: salaire+prime};
+    });
+    document.getElementById('recap-table-wrap').innerHTML = rows.length ? `
+      <table>
+        <thead><tr><th>Employé</th><th>Rôle</th><th style="text-align:right;">Salaires</th><th style="text-align:right;">Primes</th><th style="text-align:right;">Total semaine</th></tr></thead>
+        <tbody>
+          ${rows.map(r=>`<tr>
+            <td>${r.name}</td>
+            <td>${r.role||'—'}</td>
+            <td class="num sortie">${fmt(r.salaire)}</td>
+            <td class="num sortie">${fmt(r.prime)}</td>
+            <td class="num" style="font-weight:600;">${fmt(r.total)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    ` : `<div class="empty-state">Ajoutez des membres à l'équipe pour voir le récap hebdomadaire.</div>`;
+  }
+
+  function renderAll(){
+    renderDashboard();
+    renderCompta();
+    renderFactures();
+    renderEmployees();
+    renderSalaires();
+    renderPrimes();
+    renderRecap();
+  }
+
+  // ---------- Forms ----------
+  document.getElementById('form-transaction').addEventListener('submit', async e=>{
+    e.preventDefault();
+    const f = new FormData(e.target);
+    state.transactions.push({
+      id: uid('t'), date: f.get('date'), type: f.get('type'),
+      category: f.get('category'), description: f.get('description'), amount: Number(f.get('amount'))
+    });
+    await save('transactions');
+    e.target.reset();
+    e.target.date.value = todayStr();
+    renderAll();
+  });
+
+  document.getElementById('form-invoice').addEventListener('submit', async e=>{
+    e.preventDefault();
+    const f = new FormData(e.target);
+    state.invoices.push({
+      id: uid('i'), date: f.get('date'), client: f.get('client'),
+      description: f.get('description'), amount: Number(f.get('amount')), status:'en_attente'
+    });
+    await save('invoices');
+    e.target.reset();
+    e.target.date.value = todayStr();
+    renderAll();
+  });
+
+  document.getElementById('form-employee').addEventListener('submit', async e=>{
+    e.preventDefault();
+    const f = new FormData(e.target);
+    state.employees.push({ id: uid('e'), name: f.get('name'), role: f.get('role') });
+    await save('employees');
+    e.target.reset();
+    renderAll();
+  });
+
+  document.getElementById('form-salaire').addEventListener('submit', async e=>{
+    e.preventDefault();
+    const f = new FormData(e.target);
+    if(!f.get('employeeId')) return;
+    const amount = Number(f.get('amount'));
+    state.payroll.push({ id: uid('p'), employeeId: f.get('employeeId'), date: f.get('date'), type:'salaire', amount });
+    state.transactions.push({
+      id: uid('t'), date: f.get('date'), type:'sortie', category:'Salaires',
+      description: `Salaire — ${nameFor(f.get('employeeId'))}`, amount
+    });
+    await save('payroll');
+    await save('transactions');
+    e.target.reset();
+    e.target.date.value = todayStr();
+    e.target.amount.value = 150;
+    renderAll();
+  });
+
+  document.getElementById('form-prime').addEventListener('submit', async e=>{
+    e.preventDefault();
+    const f = new FormData(e.target);
+    if(!f.get('employeeId')) return;
+    const amount = Number(f.get('amount'));
+    state.payroll.push({ id: uid('p'), employeeId: f.get('employeeId'), date: f.get('date'), type:'prime', amount });
+    state.transactions.push({
+      id: uid('t'), date: f.get('date'), type:'sortie', category:'Primes',
+      description: `Prime — ${nameFor(f.get('employeeId'))}`, amount
+    });
+    await save('payroll');
+    await save('transactions');
+    e.target.reset();
+    e.target.date.value = todayStr();
+    renderAll();
+  });
+
+  // ---------- Init ----------
+  document.querySelectorAll('input[type="date"]').forEach(inp=> inp.value = todayStr());
+
+  loadAll().then(renderAll);
+
+})();
+</script>
+</body>
+</html>
